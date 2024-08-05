@@ -906,4 +906,52 @@ pub mod tests {
         assert_eq!(evalVar.value().unwrap(), eval);
         assert!(cs.is_satisfied().unwrap());
     }
+
+    /// This test is like the test `test_relaxed_r1cs_nonnative_circuit`, but instead of using a
+    /// very small circuit, here we're using a real CycleFold circuit.
+    /// To run this test:
+    /// > cargo test --release test_relaxed_r1cs_nonnative_cyclefold_circuit -- --nocapture
+    #[test]
+    fn test_relaxed_r1cs_nonnative_cyclefold_circuit() {
+        let cs = ConstraintSystem::<Fq>::new_ref();
+        use crate::folding::nova::NovaCycleFoldCircuit;
+        let cf_circuit = NovaCycleFoldCircuit::<Projective, GVar>::empty();
+        cf_circuit.generate_constraints(cs.clone()).unwrap();
+        cs.finalize();
+        let cs = cs.into_inner().unwrap();
+        let r1cs = extract_r1cs::<Fq>(&cs);
+        let (w, x) = extract_w_x::<Fq>(&cs);
+        let z = [vec![Fq::one()], x, w].concat();
+
+        let relaxed_r1cs = r1cs.clone().relax();
+
+        // natively
+        let cs = ConstraintSystem::<Fq>::new_ref();
+        let zVar = Vec::<FpVar<Fq>>::new_witness(cs.clone(), || Ok(z.clone())).unwrap();
+        let EVar =
+            Vec::<FpVar<Fq>>::new_witness(cs.clone(), || Ok(relaxed_r1cs.clone().E)).unwrap();
+        let uVar = FpVar::<Fq>::new_witness(cs.clone(), || Ok(relaxed_r1cs.u)).unwrap();
+        let r1csVar =
+            R1CSVar::<Fq, Fq, FpVar<Fq>>::new_witness(cs.clone(), || Ok(r1cs.clone())).unwrap();
+        RelaxedR1CSGadget::check_native(r1csVar, EVar, uVar, zVar).unwrap();
+        println!(
+            "num_constraints RelaxedR1CS relation check natively: {}",
+            cs.num_constraints()
+        );
+
+        // non-natively
+        let cs = ConstraintSystem::<Fr>::new_ref();
+        let zVar = Vec::new_witness(cs.clone(), || Ok(z)).unwrap();
+        let EVar = Vec::new_witness(cs.clone(), || Ok(relaxed_r1cs.E)).unwrap();
+        let uVar = NonNativeUintVar::<Fr>::new_witness(cs.clone(), || Ok(relaxed_r1cs.u)).unwrap();
+        let r1csVar =
+            R1CSVar::<Fq, Fr, NonNativeUintVar<Fr>>::new_witness(cs.clone(), || Ok(r1cs)).unwrap();
+
+        // THIS is the method that takes ~5.1M r1cs constraints:
+        RelaxedR1CSGadget::check_nonnative(r1csVar, EVar, uVar, zVar).unwrap();
+        println!(
+            "num_constraints RelaxedR1CS relation check non-natively: {}",
+            cs.num_constraints()
+        );
+    }
 }
