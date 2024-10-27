@@ -25,7 +25,7 @@ use crate::commitment::{
     CommitmentScheme,
 };
 use crate::folding::circuits::{nonnative::affine::NonNativeAffineVar, CF2};
-use crate::folding::nova::circuits::ChallengeGadget;
+use crate::folding::nova::nifs::nova::ChallengeGadget;
 use crate::frontend::FCircuit;
 use crate::transcript::poseidon::poseidon_canonical_config;
 use crate::Error;

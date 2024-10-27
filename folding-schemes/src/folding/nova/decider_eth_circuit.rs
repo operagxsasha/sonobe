@@ -25,7 +25,8 @@ use ark_std::{log2, Zero};
 use core::{borrow::Borrow, marker::PhantomData};
 
 use super::{
-    circuits::{ChallengeGadget, CommittedInstanceVar},
+    nifs::nova::ChallengeGadget,
+    nifs::nova_circuits::CommittedInstanceVar,
     nifs::{nova::NIFS, NIFSTrait},
     CommittedInstance, Nova, Witness,
 };

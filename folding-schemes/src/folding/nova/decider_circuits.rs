@@ -24,10 +24,11 @@ use ark_std::Zero;
 use core::marker::PhantomData;
 
 use super::{
-    circuits::{ChallengeGadget, CommittedInstanceVar},
     decider_eth_circuit::{
         evaluate_gadget, KZGChallengesGadget, R1CSVar, RelaxedR1CSGadget, WitnessVar,
     },
+    nifs::nova::ChallengeGadget,
+    nifs::nova_circuits::CommittedInstanceVar,
     nifs::{nova::NIFS, NIFSTrait},
     CommittedInstance, Nova, Witness,
 };
